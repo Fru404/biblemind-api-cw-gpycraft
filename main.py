@@ -10,7 +10,7 @@ app = FastAPI()
 
 # Enable CORS
 origins = [
-    "http://localhost:3000",  # React dev server origin
+    "https://biblemind.onrender.com",  # React dev server origin
     # add other allowed origins here or use ["*"] for all (only for dev)
 ]
 
