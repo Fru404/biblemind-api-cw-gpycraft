@@ -1,11 +1,26 @@
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from gpycraft.googleSheet.gsheetsdb import gsheetsdb as gb
 from gpycraft.fireStore.firestoreupload import firestoreupload
 from gpycraft.app_config import Admin
 import os
 
 app = FastAPI()
+
+# Enable CORS
+origins = [
+    "http://localhost:3000",  # React dev server origin
+    # add other allowed origins here or use ["*"] for all (only for dev)
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,          # or ["*"] to allow all origins (dev only)
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Setup config
 admin_instance = Admin()
