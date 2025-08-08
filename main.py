@@ -36,11 +36,10 @@ fire_instance = firestoreupload(storage_bucket=storage_bucket, credentials_path=
 
 
 @app.get("/sheet-data")
-async def get_sheet_data(date: Optional[str] = Query(None, description="Date in YYYY-MM-DD format")):
+async def get_sheet_data(date: Optional[str] = Query(None, description="Date in DD-MM-YYYY format")):
     try:
         raw_data = gsheets_instance.in_json()
 
-        # Parse JSON string to Python object
         if isinstance(raw_data, str):
             all_data = json.loads(raw_data)
         else:
@@ -48,10 +47,13 @@ async def get_sheet_data(date: Optional[str] = Query(None, description="Date in 
 
         if date:
             try:
-                datetime.strptime(date, "%Y-%m-%d")
-                query_date = date
+                # Parse input date as dd-mm-yyyy
+                datetime.strptime(date, "%d-%m-%Y")
+                # Convert to yyyy-mm-dd for internal matching
+                day, month, year = date.split("-")
+                query_date = f"{year}-{month.zfill(2)}-{day.zfill(2)}"
             except ValueError:
-                return JSONResponse(content={"error": "Invalid date format. Use YYYY-MM-DD."}, status_code=400)
+                return JSONResponse(content={"error": "Invalid date format. Use DD-MM-YYYY."}, status_code=400)
         else:
             query_date = datetime.now().strftime("%Y-%m-%d")
 
@@ -74,10 +76,10 @@ async def get_sheet_data(date: Optional[str] = Query(None, description="Date in 
             return JSONResponse(content=matched_entry)
         else:
             return JSONResponse(content={
-                "ot": f"No Old Testament reading available for {query_date}.",
-                "gospel": f"No Gospel reading available for {query_date}.",
-                "pope": f"No Pope reflection available for {query_date}.",
-                "date": query_date
+                "ot": f"No Old Testament reading available for {date if date else datetime.now().strftime('%d-%m-%Y')}.",
+                "gospel": f"No Gospel reading available for {date if date else datetime.now().strftime('%d-%m-%Y')}.",
+                "pope": f"No Pope reflection available for {date if date else datetime.now().strftime('%d-%m-%Y')}.",
+                "date": date if date else datetime.now().strftime("%d-%m-%Y")
             })
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
