@@ -13,6 +13,7 @@ app = FastAPI()
 
 origins = [
     "https://biblemind.onrender.com",
+    "http://localhost:3000/",
 ]
 
 app.add_middleware(
