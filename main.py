@@ -12,7 +12,7 @@ import os
 app = FastAPI()
 
 origins = [
-    "*"
+    "https://biblemind.onrender.com",
 ]
 
 app.add_middleware(
