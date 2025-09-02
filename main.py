@@ -1,13 +1,13 @@
 import json
+import os
 from datetime import datetime
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, Header, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional
 from gpycraft.googleSheet.gsheetsdb import gsheetsdb as gb
 from gpycraft.fireStore.firestoreupload import firestoreupload
 from gpycraft.app_config import Admin
-import os
 
 app = FastAPI()
 
@@ -34,9 +34,20 @@ storage_bucket = admin_instance.storage_bucket
 gsheets_instance = gb(credentials_path, sheet_url, sheet_number=sheet_number)
 fire_instance = firestoreupload(storage_bucket=storage_bucket, credentials_path=credentials_path)
 
+# === API Key dependency ===
+API_KEY = os.getenv("BIBLEMIND_API_KEY")  # set in environment
+API_KEY_NAME = "X-API-Key"  # header name
+
+def verify_api_key(x_api_key: str = Header(...)):
+    if x_api_key != API_KEY:
+        raise HTTPException(status_code=401, detail="Invalid or missing API Key")
+    return x_api_key
 
 @app.get("/sheet-data")
-async def get_sheet_data(date: Optional[str] = Query(None, description="Date in DD-MM-YYYY format")):
+async def get_sheet_data(
+    date: Optional[str] = Query(None, description="Date in DD-MM-YYYY format"),
+    api_key: str = Depends(verify_api_key)  # enforce API key
+):
     try:
         raw_data = gsheets_instance.in_json()
 
@@ -47,13 +58,14 @@ async def get_sheet_data(date: Optional[str] = Query(None, description="Date in 
 
         if date:
             try:
-                # Parse input date as dd-mm-yyyy
                 datetime.strptime(date, "%d-%m-%Y")
-                # Convert to yyyy-mm-dd for internal matching
                 day, month, year = date.split("-")
                 query_date = f"{year}-{month.zfill(2)}-{day.zfill(2)}"
             except ValueError:
-                return JSONResponse(content={"error": "Invalid date format. Use DD-MM-YYYY."}, status_code=400)
+                return JSONResponse(
+                    content={"error": "Invalid date format. Use DD-MM-YYYY."},
+                    status_code=400
+                )
         else:
             query_date = datetime.now().strftime("%Y-%m-%d")
 
