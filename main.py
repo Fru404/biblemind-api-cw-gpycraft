@@ -43,7 +43,7 @@ def verify_api_key(x_api_key: str = Header(...)):
         raise HTTPException(status_code=401, detail="Invalid or missing API Key")
     return x_api_key
 
-@app.get("/sheet-data")
+@app.get("/daily-readings")
 async def get_sheet_data(
     date: Optional[str] = Query(None, description="Date in DD-MM-YYYY format"),
     api_key: str = Depends(verify_api_key)  # enforce API key
